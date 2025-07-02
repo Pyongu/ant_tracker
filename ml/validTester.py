@@ -74,7 +74,7 @@ class TestMeanAveragePrecision(unittest.TestCase):
         self.epsilon = 1e-4
 
     def test_all_correct_one_class(self):
-        ap, tp, fp = mean_avg_prec = calculate_mAP(
+        ap = calculate_mAP(
             self.t1_preds,
             self.t1_targets,
             iou_threshold=.5
@@ -86,7 +86,7 @@ class TestMeanAveragePrecision(unittest.TestCase):
             abs(self.t1_correct_mAP - ap) < self.epsilon)
 
     def test_all_correct_batch(self):
-        ap, tp, fp = mean_avg_prec = calculate_mAP(
+        ap = calculate_mAP(
             self.t2_preds,
             self.t2_targets,
             iou_threshold=.5
@@ -95,7 +95,7 @@ class TestMeanAveragePrecision(unittest.TestCase):
             abs(self.t2_correct_mAP - ap) < self.epsilon)
 
     def test_all_wrong_boxes(self):
-        ap, tp, fp = mean_avg_prec = calculate_mAP(
+        ap = calculate_mAP(
             self.t3_preds,
             self.t3_targets,
             iou_threshold=.5
@@ -107,14 +107,11 @@ class TestMeanAveragePrecision(unittest.TestCase):
             abs(self.t3_correct_mAP - ap) < self.epsilon)
 
     def test_one_inaccurate_box(self):
-       ap, tp, fp = mean_avg_prec = calculate_mAP(
+       ap, = calculate_mAP(
             self.t4_preds,
             self.t4_targets,
             iou_threshold=.5
         )
-       print("One wrong box: ", ap)
-       print("tp: ", tp)
-       print("fp: ", fp)
        self.assertTrue(
            abs(self.t4_correct_mAP - ap) < self.epsilon)
 

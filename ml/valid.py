@@ -99,7 +99,7 @@ def calculate_mAP(det_dict, gt_dict, iou_threshold=0.5):
     ap = ap / 11.0
     aps.append(ap)
     #mean_ap =  sum(aps) / (len(aps) + 1E-6)
-    return ap, tp, fp
+    return ap
 
 def evaluate_mAP(data):
     # dictionary of lists that contains all of the bbox by image_id
@@ -134,39 +134,39 @@ def evaluate_mAP(data):
             det_boxes[image_idx].append(nms_boxes)
             image_idx += 1
         # print("gt_boxes: ", gt_boxes)
-        print("det_boxes: ", det_boxes)
+        # print("det_boxes: ", det_boxes)
     
     #print(gt_boxes)
     #print(det_boxes)
     
-    # ap = calculate_mAP(det_boxes, gt_boxes, iou_threshold=0.5)
-    # print(ap)
-    # return ap
-    return 5
+    ap = calculate_mAP(det_boxes, gt_boxes, iou_threshold=0.5)
+    print(ap)
+    return ap
 
-# Initialize the model
-num_classes = 2 # Background + ant
+if __name__ == "__main__":
+    # Initialize the model
+    num_classes = 2 # Background + ant
 
-# Move model to GPU if available
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    # Move model to GPU if available
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# val_dataset = get_coco_dataset(
-#     # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
-#     # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
-#     img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
-#     ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
-# )
+    val_dataset = get_coco_dataset(
+        img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
+        ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
+        # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
+        # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
+    )
 
-# val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
+    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
 
-# Load the trained model
-model = get_model(num_classes)
-model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
-model.to(device)
-model.eval()  # Set the model to evaluation mode
+    # Load the trained model
+    model = get_model(num_classes)
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
+    model.to(device)
+    model.eval()  # Set the model to evaluation mode
 
-# Not sure if this is needed
-COCO_CLASSES = {0: "Background", 1: "Ant"}
+    # Not sure if this is needed
+    COCO_CLASSES = {0: "Background", 1: "Ant"}
 
-# evaluate_mAP(val_loader)
+    evaluate_mAP(val_loader)

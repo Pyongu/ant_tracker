@@ -69,45 +69,42 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
 
 # Load datasets
 train_dataset = get_coco_dataset(
-    #img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/train",
-    #ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/train/_annotations.coco.json"
-    img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/train/images",
-    ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/train/images/annotations.coco.json"
+    # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/train",
+    # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/train/_annotations.coco.json"
+    # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/train/images",
+    # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/train/images/annotations.coco.json"
+    img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/project-1-at-2025-07-02-17-29-a8cd87b5/images",
+    ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/project-1-at-2025-07-02-17-29-a8cd87b5/result.json"
 )
 
+if __name__ == "__main__":
+    # DataLoader
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
 
-# val_dataset = get_coco_dataset(
-#     img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
-#     ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
-# )
-
-# DataLoader
-train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=lambda x: tuple(zip(*x)))
-#val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
-
-# Initialize the model
-num_classes = 2 # Background + ant
-model = get_model(num_classes)
+    # Initialize the model
+    num_classes = 2 # Background + ant
+    model = get_model(num_classes)
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
 
 
-# Move model to GPU if available
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-model.to(device)
+    # Move model to GPU if available
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
 
-# Define optimizer and learning rate scheduler
-params = [p for p in model.parameters() if p.requires_grad]
-optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    # Define optimizer and learning rate scheduler
+    params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
 
-# Training loop
-num_epochs = 5
-for epoch in range(num_epochs):
-    train_one_epoch(model, optimizer, train_loader, device, epoch)
-    lr_scheduler.step()
-    
-    # Save the model's state dictionary after every epoch
-    model_path = f"trainedModels/fasterrcnn_resnet50_epoch_{epoch + 1}.pth"
-    torch.save(model.state_dict(), model_path)
-    print(f"Model saved: {model_path}")
+    # Training loop
+    num_epochs = 15
+    for epoch in range(10, num_epochs):
+        train_one_epoch(model, optimizer, train_loader, device, epoch)
+        lr_scheduler.step()
+        
+        # Save the model's state dictionary after every epoch
+        model_path = f"trainedModels/fasterrcnn_resnet50_epoch_{epoch + 1}.pth"
+        torch.save(model.state_dict(), model_path)
+        print(f"Model saved: {model_path}")
 

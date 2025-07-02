@@ -52,43 +52,18 @@ def nms(boxes, iou_threshold=0.3):
     
     return np.array(selected_boxes)
 
-
-
-# Initialize the model
-num_classes = 2 # Background + ant
-
-# Move model to GPU if available
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-
-# Load the trained model
-model = get_model(num_classes)
-model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
-model.to(device)
-model.eval()  # Set the model to evaluation mode
-
-
 def prepare_image(image_path):
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     image = Image.open(image_path).convert("RGB")  # Open image
     image_tensor = F.to_tensor(image).unsqueeze(0)  # Convert image to tensor and add batch dimension
     return image_tensor.to(device)
 
-
-
-# Load the unseen image
-image_path = "testIM/anttest2.jpg"
-image_tensor = prepare_image(image_path)
-
-with torch.no_grad():  # Disable gradient computation for inference
-    prediction = model(image_tensor)
-
-# `prediction` contains:
-# - boxes: predicted bounding boxes
-# - labels: predicted class labels
-# - scores: predicted scores for each box (confidence level)
-COCO_CLASSES = {0: "Background", 1: "Ant"}
-
 def get_class_name(class_id):
+    # `prediction` contains:
+    # - boxes: predicted bounding boxes
+    # - labels: predicted class labels
+    # - scores: predicted scores for each box (confidence level)
+    COCO_CLASSES = {0: "Background", 1: "Ant"}
     return COCO_CLASSES.get(class_id, "Unknown")
     
 # Draw bounding boxes with the correct class names and increase image size
@@ -96,6 +71,10 @@ def draw_boxes(image, prediction, fig_size=(10, 10)):
     boxes = prediction[0]['boxes'].cpu().numpy()  # Get predicted bounding boxes
     labels = prediction[0]['labels'].cpu().numpy()  # Get predicted labels
     scores = prediction[0]['scores'].cpu().numpy()  # Get predicted scores
+
+    if len(boxes) == 0:
+        print("No Detections")
+        return
 
     boxes_with_scores = np.hstack([boxes, scores[:, np.newaxis]])
 
@@ -121,5 +100,24 @@ def draw_boxes(image, prediction, fig_size=(10, 10)):
     plt.axis('off')  # Turn off axis
     plt.savefig("result/result.png")
 
-# Display the image with bounding boxes and correct labels
-draw_boxes(Image.open(image_path), prediction, fig_size=(12, 10))  # Example of increased size
+if __name__ == "__main__":
+    # Initialize the model
+    num_classes = 2 # Background + ant
+
+    # Move model to GPU if available
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    # Load the unseen image
+    image_path = "testIM/anttest2.jpg"
+    image_tensor = prepare_image(image_path)
+
+    # Load the trained model
+    model = get_model(num_classes)
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_15.pth"))
+    model.to(device)
+    model.eval()  # Set the model to evaluation mode
+    # Display the image with bounding boxes and correct labels
+    with torch.no_grad():  # Disable gradient computation for inference
+        prediction = model(image_tensor)
+
+    draw_boxes(Image.open(image_path), prediction, fig_size=(12, 10))  # Example of increased size
