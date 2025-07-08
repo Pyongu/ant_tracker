@@ -47,8 +47,8 @@ def main(arg):
     with open(txt_filepath, "r") as file:
         for id, line in enumerate(file):
             spiltList = line.split(",")
-            image_id = spiltList[l0]
-            x,y,h,w = spiltList[l1], spiltList[l2], spiltList[l3], spiltList[l4]
+            image_id = int(spiltList[l0])
+            x,y,h,w = float(spiltList[l1]), float(spiltList[l2]), float(spiltList[l3]), float(spiltList[l4])
             bbox = [x, y, h, w]
             annotation = create_annotation(id, image_id, bbox)
             annotations.append(annotation)

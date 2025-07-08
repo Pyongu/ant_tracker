@@ -16,6 +16,8 @@ ml/natural_substrate/*
 ml/helper.py
 ml/project-1-at-2025-07-02-17-29-a8cd87b5/*
 ml/Ant_dataset
+ml/ants.v2i.coco-20250708T213721Z-1-001
+ml/help.py
 
 out_test/
 out_test2

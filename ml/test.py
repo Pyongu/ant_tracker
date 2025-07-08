@@ -2,6 +2,7 @@ import torch
 import torchvision
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.faster_rcnn import FasterRCNN_ResNet50_FPN_Weights
 from torchvision.transforms import functional as F
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -10,7 +11,7 @@ import numpy as np
 # Load Faster R-CNN with ResNet-50 backbone
 def get_model(num_classes):
     # Load pre-trained Faster R-CNN
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.COCO_V1)
     # Get the number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # Replace the pre-trained head with a new one
@@ -106,14 +107,15 @@ if __name__ == "__main__":
 
     # Move model to GPU if available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    # device = torch.device('cpu')
 
     # Load the unseen image
-    image_path = "testIM/anttest2.jpg"
+    image_path = "/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/testIM/anttest2.JPG"
     image_tensor = prepare_image(image_path)
 
     # Load the trained model
     model = get_model(num_classes)
-    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_15.pth"))
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
     model.to(device)
     model.eval()  # Set the model to evaluation mode
     # Display the image with bounding boxes and correct labels

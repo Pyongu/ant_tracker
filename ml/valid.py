@@ -151,10 +151,12 @@ if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     val_dataset = get_coco_dataset(
-        img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
-        ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
+        # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
+        # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
         # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
         # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
+        img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid",
+        ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid/_annotations.coco.json"
     )
 
     val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
@@ -162,7 +164,7 @@ if __name__ == "__main__":
 
     # Load the trained model
     model = get_model(num_classes)
-    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
     model.to(device)
     model.eval()  # Set the model to evaluation mode
 

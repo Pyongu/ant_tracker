@@ -96,7 +96,7 @@ def one_image_compare(image, ground_truth, image_tensor, filename, fig_size=(10,
         plt.gca().add_patch(plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, 
                                               linewidth=2, edgecolor='b', facecolor='none'))
     
-    plt.savefig(f"result/Pogo/{filename}.png")
+    plt.savefig(f"result/lab/{filename}.png")
     plt.close()
 
 def compare_all_images(image_root_dir, ann_file):
@@ -132,10 +132,10 @@ if __name__ == "__main__":
 
     # Load the trained model
     model = get_model(num_classes)
-    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_15.pth"))
+    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
     model.to(device)
     model.eval()  # Set the model to evaluation mode
 
-    # compare_all_images(image_root_dir="ants.v2i.coco/valid/", ann_file="ants.v2i.coco/valid/_annotations.coco.json")
-    compare_all_images(image_root_dir="project-1-at-2025-07-02-17-29-a8cd87b5/images/", ann_file="project-1-at-2025-07-02-17-29-a8cd87b5/result.json")
+    compare_all_images(image_root_dir="ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/test/", ann_file="ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/test/_annotations.coco.json")
+    # compare_all_images(image_root_dir="project-1-at-2025-07-02-17-29-a8cd87b5/images/", ann_file="project-1-at-2025-07-02-17-29-a8cd87b5/result.json")
 
