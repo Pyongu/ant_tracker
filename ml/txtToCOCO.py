@@ -60,19 +60,15 @@ def main(args):
     image_id = 0
     for filepath in txt_file_paths:
         with open(filepath, 'r') as f:
-            #print("image_id: ", image_id, "filepath: ", filepath)
             for x in f:
                 splitList = x.split()
-                #print(splitList)
                 l1, l2, l3, l4 = args.bbox
                 xmin, ymin, xmax, ymax = int(splitList[l1]), int(splitList[l2]), int(splitList[l3]), int(splitList[l4])
                 bbox = [xmin, ymin, xmax - xmin, ymax - ymin] # in COCO bbox format [x,y,width,height]
-                #print(bbox)
                 annotation = create_annotation(id, image_id, bbox)
                 annotations.append(annotation)
                 id += 1
         image_id += 1
-    #print(annotations)
 
     im_path = Path(image_filepaths)
     if im_path.is_dir():
@@ -87,7 +83,7 @@ def main(args):
         image = create_image(name, id)
         images.append(image)
         id += 1
-    #print(images)
+
     coco_data = {}
     coco_data["images"] = images
     coco_data["annotations"] = annotations

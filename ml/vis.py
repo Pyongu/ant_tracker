@@ -34,7 +34,7 @@ def match_predictions_to_gt(pred_boxes, gt_boxes, iou_thresh=0.5):
                 best_gt_idx = j
 
         if best_iou >= iou_thresh:
-            true_positives.append(pred)  # only append the pred box
+            true_positives.append(pred)  
             matched_gt.add(best_gt_idx)
             matched_pred.add(i)
         else:
@@ -46,13 +46,13 @@ def match_predictions_to_gt(pred_boxes, gt_boxes, iou_thresh=0.5):
 
     return true_positives, false_positives, false_negatives
         
-# Draw bounding boxes with the correct class names and increase image size
+
 def one_image_compare(image, ground_truth, image_tensor, filename, fig_size=(10, 10)):
     with torch.no_grad():
         prediction = model(image_tensor)
-    boxes = prediction[0]['boxes'].cpu().numpy()  # Get predicted bounding boxes
-    labels = prediction[0]['labels'].cpu().numpy()  # Get predicted labels
-    scores = prediction[0]['scores'].cpu().numpy()  # Get predicted scores
+    boxes = prediction[0]['boxes'].cpu().numpy()  
+    labels = prediction[0]['labels'].cpu().numpy()  
+    scores = prediction[0]['scores'].cpu().numpy()  
 
     boxes_with_scores = np.hstack([boxes, scores[:, np.newaxis]])
 
@@ -63,14 +63,11 @@ def one_image_compare(image, ground_truth, image_tensor, filename, fig_size=(10,
     filtered_fp  = [box[:4] for box in false_pos]
     filtered_tp  = [box[:4] for box in true_pos]
     filtered_fn = [box[:4] for box in false_neg]
-    # filtered_boxes = nms_boxes[:, :4]
     
-    # Set a threshold for showing boxes (e.g., score > 0.5)
     threshold = 0.5
     
-    # Set up the figure size to control the image size
-    plt.figure(figsize=fig_size)  # Adjust the figure size here
-    plt.imshow(image)  # Display the image
+    plt.figure(figsize=fig_size)  
+    plt.imshow(image)  
 
     # Red Box = False Positive
     for box, label, score in zip(filtered_fp, labels, scores):
@@ -85,7 +82,7 @@ def one_image_compare(image, ground_truth, image_tensor, filename, fig_size=(10,
     for box, label, score in zip(filtered_tp, labels, scores):
         if score > threshold:
             x_min, y_min, x_max, y_max = box
-            class_name = get_class_name(label)  # Get the class name
+            class_name = get_class_name(label)
             plt.gca().add_patch(plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, 
                                               linewidth=2, edgecolor='g', facecolor='none'))
             plt.text(x_min, y_min, f"{class_name} ({score:.2f})", color='g')
@@ -124,17 +121,17 @@ def compare_all_images(image_root_dir, ann_file):
         one_image_compare(Image.open(imagePath), gtDict[i], image_tensor, fileName, fig_size=(10, 10))
 
 if __name__ == "__main__":
-    # Initialize the model
+
     num_classes = 2 # Background + ant
 
-    # Move model to GPU if available
+
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    # Load the trained model
+
     model = get_model(num_classes)
     model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
     model.to(device)
-    model.eval()  # Set the model to evaluation mode
+    model.eval()
 
     compare_all_images(image_root_dir="ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/test/", ann_file="ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/test/_annotations.coco.json")
     # compare_all_images(image_root_dir="project-1-at-2025-07-02-17-29-a8cd87b5/images/", ann_file="project-1-at-2025-07-02-17-29-a8cd87b5/result.json")

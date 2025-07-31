@@ -9,68 +9,46 @@ from test import iou, nms, get_model
 from collections import defaultdict
 
 def calculate_mAP(det_dict, gt_dict, iou_threshold=0.5):
-    aps = []
 
     gt_matched = {}
     total_true_bboxes = 0
-    amount_bboxes = defaultdict(int)
-    total_detections = 0
-    for image_id in range(len(gt_dict)):
-        amount_bboxes[image_id] = len(gt_dict[image_id])
-        gt_matched[image_id] = [False] * len(gt_dict[image_id])
-        total_true_bboxes += len(gt_dict[image_id])
-        total_detections += len(det_dict[image_id][0])
-    #print(amount_bboxes)
-    
-    # for key, val in amount_bboxes.items():
-    #     amount_bboxes[key] = torch.zeros(val)
-    
-    #print(amount_bboxes)
+    for image_id, gts in gt_dict.items():
+        gt_matched[image_id] = [False] * len(gts)
+        total_true_bboxes += len(gts)
 
-    # Sorts by Prediction score
-    det_dict = dict(sorted(det_dict.items(), key=lambda item : item[1][0][0][4], reverse = True))
-    #print(len(det_dict))
-    
-    # gt_matched = [False for im_gts in gt_dict]
+    all_detections = []
+    for image_id, det_lists in det_dict.items():
+        for det_array in det_lists:
+            for det in det_array:
+                all_detections.append((image_id, det))
 
-    # print("gt_matched: ", gt_matched)
-    # print("total_true_boxes: ", total_true_bboxes)
+    if total_true_bboxes == 0:
+        return 0.0  
 
-    # Initization of TP and FP
-    tp = [0] * total_detections
-    fp = [0] * total_detections
-    #print("tp: ", len(tp) , "fp: ", len(fp))
+    all_detections.sort(key=lambda x: x[1][4], reverse=True)
 
-    global_det_idx = 0
-    for image_idx in range(len(det_dict)):
-        for det_idx, det_list in enumerate(det_dict[image_idx][0]):
-            #print("det_idx: ", det_idx, "det_list[:4]: ", det_list[:4])
-            #print("image_idex: ", image_idx, "det_idx: :", det_idx)
-            #print("image number: ", image_idx)
-            #print("length of det_list: ", len(det_list))
-            best_iou = -1
-            best_gt_idx = -1
-            for gt_idx, gt in enumerate(gt_dict[image_idx]):
-                #print("gt_idx", gt_idx,"gt: ", gt)
-                iou_value = iou(det_list[:4], gt)
+    tp = []
+    fp = []
 
-                if iou_value > best_iou:
-                    best_iou = iou_value
-                    #print("gt_idx: ", gt_idx)
-                    best_gt_idx = gt_idx
-            #print("best GT IDX:", best_gt_idx)
-            #print("gt_matched: ", gt_matched[image_idx])
-            if best_iou < iou_threshold or gt_matched[image_idx][best_gt_idx]:
-                #print("det_idx: ", det_idx)
-                fp[global_det_idx] = 1
-            else:
-                tp[global_det_idx] = 1
-                gt_matched[image_idx][best_gt_idx] = True
-            global_det_idx += 1
+    for image_id, det in all_detections:
+        pred_box = det[:4]
+        best_iou = -1
+        best_gt_idx = -1
 
-    #print("FP: ", FP)
-    #print("TP: ", TP)
-    # Cumulative tp and fp
+        for gt_idx, gt_box in enumerate(gt_dict.get(image_id, [])):
+            iou_value = iou(pred_box, gt_box)
+            if iou_value > best_iou:
+                best_iou = iou_value
+                best_gt_idx = gt_idx
+
+        if best_iou >= iou_threshold and not gt_matched[image_id][best_gt_idx]:
+            tp.append(1)
+            fp.append(0)
+            gt_matched[image_id][best_gt_idx] = True
+        else:
+            tp.append(0)
+            fp.append(1)
+
     tp = np.cumsum(tp)
     fp = np.cumsum(fp)
 
@@ -78,76 +56,66 @@ def calculate_mAP(det_dict, gt_dict, iou_threshold=0.5):
     recalls = tp / np.maximum(total_true_bboxes, eps)
     precisions = tp / np.maximum((tp + fp), eps)
 
-    # Calculating area underneath the recall vs precisions curve
     recalls = np.concatenate(([0.0], recalls, [1.0]))
     precisions = np.concatenate(([0.0], precisions, [0.0]))
-    # area
-    # for i in range(precisions.size - 1, 0, -1):
-    #     precisions[i - 1] = np.maximum(precisions[i - 1], precisions[i])
-    # i = np.where(recalls[1:] != recalls[:-1])[0]
-    # # Add the rectangular areas to get ap
-    # ap = np.sum((recalls[i + 1] - recalls[i]) * precisions[i + 1])
 
     ap = 0.0
-    for interp_pt in np.arange(0, 1 + 1E-3, 0.1):
-        # Get precision values for recall values >= interp_pt
-        prec_interp_pt = precisions[recalls >= interp_pt]
-        
-        # Get max of those precision values
-        prec_interp_pt = prec_interp_pt.max() if prec_interp_pt.size > 0.0 else 0.0
-        ap += prec_interp_pt
+    for interp_pt in np.arange(0, 1.0001, 0.1):
+        precs = precisions[recalls >= interp_pt]
+        if precs.size > 0:
+            ap += precs.max()
     ap = ap / 11.0
-    aps.append(ap)
-    #mean_ap =  sum(aps) / (len(aps) + 1E-6)
     return ap
+
 
 def evaluate_mAP(data):
     # dictionary of lists that contains all of the bbox by image_id
     # x1, y1, x2, y2
     gt_boxes = defaultdict(list)
     det_boxes = defaultdict(list)
-    # I don't like this implemtation change later
-    image_idx = 0
-    for images, targets in data:
-        for target in targets:
-            for obj in target:
-                # Extract bbox
-                bbox = obj["bbox"]  # Format: [x, y, width, height]
-                x, y, w, h = bbox
-                image_id = obj["image_id"]
 
-                # Ensure the width and height are positive
+    for images, targets in data:
+
+        images = [img.to(device) for img in images]
+        predictions = model(images)
+
+        for idx, target in enumerate(targets):
+
+            image_id = None
+            for obj in target:
+                
+                bbox = obj["bbox"]  # Coco Format: [x, y, width, height]
+                x, y, w, h = bbox
+                
+                # Change this default value
+                image_id = obj.get("image_id", image_id)
+
+
                 if w > 0 and h > 0:
                     gt_boxes[image_id].append([x, y, x + w, y + h])
-        
-        for image in images:
+
             with torch.no_grad():
-                image = image.unsqueeze(0)
-                image = image.to(device) 
-                prediction = model(image)
-            
-            boxes = prediction[0]['boxes'].cpu().numpy()  # Get predicted bounding boxes
-            scores = prediction[0]['scores'].cpu().numpy()  # Get predicted scores
-            boxes_with_scores = np.hstack([boxes, scores[:, np.newaxis]])
-            # Remove overlapping boxes
-            nms_boxes = nms(boxes_with_scores, iou_threshold=0.3)
-            det_boxes[image_idx].append(nms_boxes)
-            image_idx += 1
-        # print("gt_boxes: ", gt_boxes)
-        # print("det_boxes: ", det_boxes)
-    
-    #print(gt_boxes)
-    #print(det_boxes)
+                pred = predictions[idx]
+                boxes = pred.get("boxes").cpu()
+                scores = pred.get("scores").cpu()
+
+                if boxes.size == 0:
+                    print("No Detections")
+                    continue
+                
+                boxes_with_scores = np.hstack([boxes, scores[:, np.newaxis]])
+                nms_boxes = nms(boxes_with_scores, iou_threshold=0.3)
+                det_boxes[image_id].append(nms_boxes)
     
     ap = calculate_mAP(det_boxes, gt_boxes, iou_threshold=0.5)
     print(ap)
     return ap
 
 if __name__ == "__main__":
-    # Initialize the model
+
     num_classes = 2 # Background + ant
 
-    # Move model to GPU if available
+
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     val_dataset = get_coco_dataset(
@@ -155,18 +123,22 @@ if __name__ == "__main__":
         # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
         # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
         # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
-        img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid",
-        ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid/_annotations.coco.json"
+        # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid",
+        # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid/_annotations.coco.json"
+        # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/img",
+        # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/annotations.coco.json"
+        img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/images",
+        ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/cleanresult.json"
     )
 
     val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
 
-    # Load the trained model
+
     model = get_model(num_classes)
-    model.load_state_dict(torch.load("trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
+    model.load_state_dict(torch.load("ml/trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
     model.to(device)
-    model.eval()  # Set the model to evaluation mode
+    model.eval()  
 
     # Not sure if this is needed
     COCO_CLASSES = {0: "Background", 1: "Ant"}

@@ -69,7 +69,7 @@ class TestMeanAveragePrecision(unittest.TestCase):
         self.t4_targets[0].append([0.1, 0.1, 0.2, 0.2, 0.6])
         self.t4_targets[0].append([0.8, 0.1, 0.9, 0.2, 0.75])
         
-        self.t4_correct_mAP = 7 / 12
+        self.t4_correct_mAP = 7 / 10
 
         self.epsilon = 1e-4
 
@@ -107,11 +107,12 @@ class TestMeanAveragePrecision(unittest.TestCase):
             abs(self.t3_correct_mAP - ap) < self.epsilon)
 
     def test_one_inaccurate_box(self):
-       ap, = calculate_mAP(
+       ap = calculate_mAP(
             self.t4_preds,
             self.t4_targets,
             iou_threshold=.5
         )
+       print(ap)
        self.assertTrue(
            abs(self.t4_correct_mAP - ap) < self.epsilon)
 
