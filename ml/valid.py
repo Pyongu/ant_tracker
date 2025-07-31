@@ -68,7 +68,16 @@ def calculate_mAP(det_dict, gt_dict, iou_threshold=0.5):
     return ap
 
 
-def evaluate_mAP(data):
+def evaluate_mAP(data, num_epochs):
+
+    device = torch.device('cuda')
+
+    # two classes: background + ant
+    model = get_model(2)
+    model.load_state_dict(torch.load(f"ml/trainedModels/fasterrcnn_resnet50_epoch_{num_epochs}.pth"))
+    model.to(device)
+    model.eval()
+    
     # dictionary of lists that contains all of the bbox by image_id
     # x1, y1, x2, y2
     gt_boxes = defaultdict(list)
@@ -111,36 +120,36 @@ def evaluate_mAP(data):
     print(ap)
     return ap
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    num_classes = 2 # Background + ant
-
-
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    val_dataset = get_coco_dataset(
-        # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
-        # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
-        # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
-        # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
-        # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid",
-        # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid/_annotations.coco.json"
-        # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/img",
-        # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/annotations.coco.json"
-        img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/images",
-        ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/cleanresult.json"
-    )
-
-    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
+#     num_classes = 2 # Background + ant
 
 
+#     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    model = get_model(num_classes)
-    model.load_state_dict(torch.load("ml/trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
-    model.to(device)
-    model.eval()  
+#     val_dataset = get_coco_dataset(
+#         # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid",
+#         # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/ants.v2i.coco/valid/_annotations.coco.json"
+#         # img_dir="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images",
+#         # ann_file="/Users/pk_3/My_Documents/AntProjectSM2025/ant_tracker-1/ml/natural_substrate/test/images/annotations.coco.json"
+#         # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid",
+#         # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/ants.v2i.coco-20250708T213721Z-1-001/ants.v2i.coco/valid/_annotations.coco.json"
+#         # img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/img",
+#         # ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/Ant_dataset/OutdoorDataset/Seq0006Object21Image64/annotations.coco.json"
+#         img_dir="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/images",
+#         ann_file="/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/cleanresult.json"
+#     )
 
-    # Not sure if this is needed
-    COCO_CLASSES = {0: "Background", 1: "Ant"}
+#     val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, collate_fn=lambda x: tuple(zip(*x)))
 
-    evaluate_mAP(val_loader)
+
+
+#     model = get_model(num_classes)
+#     model.load_state_dict(torch.load("ml/trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
+#     model.to(device)
+#     model.eval()  
+
+#     # Not sure if this is needed
+#     COCO_CLASSES = {0: "Background", 1: "Ant"}
+
+#     evaluate_mAP(val_loader)

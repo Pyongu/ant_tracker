@@ -61,9 +61,10 @@ def get_class_name(class_id):
     return COCO_CLASSES.get(class_id, "Unknown")
     
 def draw_boxes(image, prediction, fig_size=(10, 10)):
-    boxes = prediction.get('boxes').cpu().numpy()
-    labels = prediction.get('labels').cpu().numpy()  
-    scores = prediction.get('scores').cpu().numpy()  
+    # Only one image so only only prediction in the array
+    boxes = prediction[0]['boxes'].cpu().numpy()
+    labels = prediction[0]['labels'].cpu().numpy()  
+    scores = prediction[0]['scores'].cpu().numpy()  
 
     if len(boxes) == 0:
         print("No Detections")
@@ -98,11 +99,11 @@ if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # device = torch.device('cpu')
 
-    image_path = "/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/export_176945_project-176945-at-2025-07-30-22-46-72354786/images/frame0136.png"
+    image_path = "/home/paulkim/Documents/BeeLabSM2025/ml-ant_tracker/ant_tracker/ml/testIM/anttest2.JPG"
     image_tensor = prepare_image(image_path)
 
     model = get_model(num_classes)
-    model.load_state_dict(torch.load("ml/trainedModels/fasterrcnn_resnet50_epoch_10.pth"))
+    model.load_state_dict(torch.load("ml/trainedModels/fasterrcnn_resnet50_epoch_5.pth"))
     model.to(device)
     model.eval() 
 
