@@ -68,13 +68,13 @@ def calculate_mAP(det_dict, gt_dict, iou_threshold=0.5):
     return ap
 
 
-def evaluate_mAP(data, num_epochs):
+def evaluate_mAP(model, data):
 
     device = torch.device('cuda')
 
     # two classes: background + ant
-    model = get_model(2)
-    model.load_state_dict(torch.load(f"ml/trainedModels/fasterrcnn_resnet50_epoch_{num_epochs}.pth"))
+    # model = get_model(2)
+    # model.load_state_dict(torch.load(f"ml/trainedModels/fasterrcnn_resnet50_epoch_{num_epochs}.pth"))
     model.to(device)
     model.eval()
     
